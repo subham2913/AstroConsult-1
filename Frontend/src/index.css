@@ -1,0 +1,3 @@
+@import "tailwindcss";
+/* In your main CSS file (e.g., index.css or App.css) */
+@import "prosemirror-view/style/prosemirror.css";
