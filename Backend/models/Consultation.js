@@ -41,6 +41,14 @@ const consultationSchema = new mongoose.Schema(
     date: { type: Date },
     notes: { type: String },
     
+    // NEW: Owner/Creator of this consultation
+    createdBy: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "User", 
+      required: true,
+      index: true // Add index for faster queries
+    },
+    
     // Status
     status: { 
       type: String, 
@@ -57,6 +65,8 @@ consultationSchema.index({ dateOfBirth: 1 });
 consultationSchema.index({ consultationDate: 1 });
 consultationSchema.index({ phone: 1 }); // Added for better search performance
 consultationSchema.index({ status: 1 }); // Added for status filtering
+consultationSchema.index({ createdBy: 1 }); // NEW: Index for user-specific queries
+consultationSchema.index({ createdBy: 1, consultationDate: -1 }); // NEW: Compound index for user + date sorting
 
 // Virtual to check if PDF exists
 consultationSchema.virtual('hasPDF').get(function() {
@@ -71,6 +81,13 @@ consultationSchema.methods.getPDFInfo = function() {
     fileId: this.kundaliFileId,
     legacyUrl: this.kundaliPdfUrl
   };
+};
+
+// NEW: Method to check if user owns this consultation
+consultationSchema.methods.isOwnedBy = function(userId) {
+  // Handle both populated and non-populated createdBy
+  const createdById = this.createdBy._id || this.createdBy;
+  return createdById.toString() === userId.toString();
 };
 
 // Pre-remove middleware to handle PDF cleanup

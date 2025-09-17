@@ -8,9 +8,10 @@ const {
   getConsultationById,
   updateConsultation,
   deleteConsultation,
-  getConsultationsByUser
+  getConsultationsByUser,
+  getMyConsultations // NEW: Import the new controller method
 } = require("../controllers/consultationController");
-const authMiddleware = require("../middleware/authMiddleware");
+const {authMiddleware} = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -51,17 +52,8 @@ const handleMulterError = (error, req, res, next) => {
   next(error);
 };
 
-// Get all consultations with filters and search
-router.get("/", authMiddleware(), getConsultations);
-
-// Get consultation by ID
-router.get("/details/:id", authMiddleware(), getConsultationById);
-
-// Get consultations by user ID
-router.get("/user/:userId", authMiddleware(), getConsultationsByUser);
-
-// View PDF file
-router.get("/:id/pdf/view", authMiddleware(), async (req, res) => {
+// NEW: Helper middleware to check consultation ownership
+const checkConsultationOwnership = async (req, res, next) => {
   try {
     const Consultation = require('../models/Consultation');
     const consultation = await Consultation.findById(req.params.id);
@@ -69,6 +61,34 @@ router.get("/:id/pdf/view", authMiddleware(), async (req, res) => {
     if (!consultation) {
       return res.status(404).json({ msg: 'Consultation not found' });
     }
+    
+    if (!consultation.isOwnedBy(req.user.id)) {
+      return res.status(403).json({ msg: 'Access denied. You can only access your own consultations.' });
+    }
+    
+    req.consultation = consultation;
+    next();
+  } catch (error) {
+    res.status(500).json({ msg: 'Server error while checking consultation ownership' });
+  }
+};
+
+// NEW: Get current user's consultations (simplified endpoint)
+router.get("/my", authMiddleware(), getMyConsultations);
+
+// Get all consultations with filters and search (user-specific)
+router.get("/", authMiddleware(), getConsultations);
+
+// Get consultation by ID (with ownership check)
+router.get("/details/:id", authMiddleware(), getConsultationById);
+
+// Get consultations by user ID (with ownership validation)
+router.get("/user/:userId", authMiddleware(), getConsultationsByUser);
+
+// View PDF file (with ownership check)
+router.get("/:id/pdf/view", authMiddleware(), checkConsultationOwnership, async (req, res) => {
+  try {
+    const consultation = req.consultation;
 
     if (!consultation.kundaliFileId) {
       return res.status(404).json({ msg: 'PDF not found' });
@@ -95,15 +115,10 @@ router.get("/:id/pdf/view", authMiddleware(), async (req, res) => {
   }
 });
 
-// Download PDF file
-router.get("/:id/pdf", authMiddleware(), async (req, res) => {
+// Download PDF file (with ownership check)
+router.get("/:id/pdf", authMiddleware(), checkConsultationOwnership, async (req, res) => {
   try {
-    const Consultation = require('../models/Consultation');
-    const consultation = await Consultation.findById(req.params.id);
-    
-    if (!consultation) {
-      return res.status(404).json({ msg: 'Consultation not found' });
-    }
+    const consultation = req.consultation;
 
     if (!consultation.kundaliFileId) {
       return res.status(404).json({ msg: 'PDF not found' });
@@ -147,7 +162,8 @@ router.post("/", authMiddleware(), upload.single('kundaliPdf'), handleMulterErro
         metadata: {
           originalName: req.file.originalname,
           uploadDate: new Date(),
-          consultationId: null // Will be updated after consultation is created
+          consultationId: null, // Will be updated after consultation is created
+          createdBy: req.user.id // NEW: Track who uploaded the file
         }
       });
 
@@ -174,7 +190,7 @@ router.post("/", authMiddleware(), upload.single('kundaliPdf'), handleMulterErro
   }
 });
 
-// Update consultation with optional PDF upload
+// Update consultation with optional PDF upload (with ownership check)
 router.put("/:id", authMiddleware(), upload.single('kundaliPdf'), handleMulterError, async (req, res) => {
   try {
     const Consultation = require('../models/Consultation');
@@ -182,6 +198,11 @@ router.put("/:id", authMiddleware(), upload.single('kundaliPdf'), handleMulterEr
 
     if (!existingConsultation) {
       return res.status(404).json({ msg: 'Consultation not found' });
+    }
+
+    // NEW: Check ownership before allowing update
+    if (!existingConsultation.isOwnedBy(req.user.id)) {
+      return res.status(403).json({ msg: 'Access denied. You can only update your own consultations.' });
     }
 
     // Parse consultation data
@@ -209,7 +230,8 @@ router.put("/:id", authMiddleware(), upload.single('kundaliPdf'), handleMulterEr
         metadata: {
           originalName: req.file.originalname,
           uploadDate: new Date(),
-          consultationId: req.params.id
+          consultationId: req.params.id,
+          createdBy: req.user.id // NEW: Track who uploaded the file
         }
       });
 
@@ -235,7 +257,7 @@ router.put("/:id", authMiddleware(), upload.single('kundaliPdf'), handleMulterEr
   }
 });
 
-// Delete consultation (enhanced to delete PDF)
+// Delete consultation (enhanced to delete PDF with ownership check)
 router.delete("/:id", authMiddleware(), async (req, res) => {
   try {
     const Consultation = require('../models/Consultation');
@@ -243,6 +265,11 @@ router.delete("/:id", authMiddleware(), async (req, res) => {
 
     if (!consultation) {
       return res.status(404).json({ msg: 'Consultation not found' });
+    }
+
+    // NEW: Check ownership before allowing deletion
+    if (!consultation.isOwnedBy(req.user.id)) {
+      return res.status(403).json({ msg: 'Access denied. You can only delete your own consultations.' });
     }
 
     // Delete PDF from GridFS if exists
@@ -263,6 +290,5 @@ router.delete("/:id", authMiddleware(), async (req, res) => {
     res.status(500).json({ msg: 'Server error while deleting consultation' });
   }
 });
-
 
 module.exports = router;

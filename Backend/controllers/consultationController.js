@@ -11,7 +11,13 @@ const getGFSBucket = () => {
 
 exports.addConsultation = async (req, res) => {
   try {
-    const consultation = await Consultation.create(req.body);
+    // NEW: Add the authenticated user as the creator
+    const consultationData = {
+      ...req.body,
+      createdBy: req.user.id // Set the authenticated user as creator
+    };
+    
+    const consultation = await Consultation.create(consultationData);
     
     // Update GridFS metadata if file was uploaded
     if (consultation.kundaliFileId && req.gfsBucket) {
@@ -36,7 +42,8 @@ exports.addConsultation = async (req, res) => {
 
     const populatedConsultation = await Consultation.findById(consultation._id)
       .populate("categories", "name")
-      .populate("clientId", "name email");
+      .populate("clientId", "name email")
+      .populate("createdBy", "name email"); // NEW: Populate creator info
     
     res.status(201).json(populatedConsultation);
   } catch (error) {
@@ -58,7 +65,10 @@ exports.getConsultations = async (req, res) => {
       sortOrder = 'desc'
     } = req.query;
     
-    let query = {};
+    // NEW: Base query filters by authenticated user
+    let query = {
+      createdBy: req.user.id // Only get consultations created by this user
+    };
     
     // Filter by category
     if (category) {
@@ -108,6 +118,7 @@ exports.getConsultations = async (req, res) => {
     const consultations = await Consultation.find(query)
       .populate("categories", "name")
       .populate("clientId", "name email")
+      .populate("createdBy", "name email") // NEW: Populate creator info
       .sort(sortOptions)
       .skip(skip)
       .limit(parseInt(limit));
@@ -144,10 +155,16 @@ exports.getConsultationById = async (req, res) => {
     
     const consultation = await Consultation.findById(id)
       .populate("categories", "name")
-      .populate("clientId", "name email");
+      .populate("clientId", "name email")
+      .populate("createdBy", "name email"); // NEW: Populate creator info
     
     if (!consultation) {
       return res.status(404).json({ msg: "Consultation not found" });
+    }
+    
+    // NEW: Check if user owns this consultation
+    if (!consultation.isOwnedBy(req.user.id)) {
+      return res.status(403).json({ msg: "Access denied. You can only view your own consultations." });
     }
     
     // Add PDF info to response
@@ -172,12 +189,18 @@ exports.updateConsultation = async (req, res) => {
       return res.status(404).json({ msg: "Consultation not found" });
     }
     
+    // NEW: Check if user owns this consultation
+    if (!consultation.isOwnedBy(req.user.id)) {
+      return res.status(403).json({ msg: "Access denied. You can only update your own consultations." });
+    }
+    
     const updatedConsultation = await Consultation.findByIdAndUpdate(
       id,
       req.body,
       { new: true }
     ).populate("categories", "name")
-     .populate("clientId", "name email");
+     .populate("clientId", "name email")
+     .populate("createdBy", "name email"); // NEW: Populate creator info
     
     res.json(updatedConsultation);
   } catch (error) {
@@ -192,6 +215,11 @@ exports.deleteConsultation = async (req, res) => {
     const consultation = await Consultation.findById(id);
     if (!consultation) {
       return res.status(404).json({ msg: "Consultation not found" });
+    }
+    
+    // NEW: Check if user owns this consultation
+    if (!consultation.isOwnedBy(req.user.id)) {
+      return res.status(403).json({ msg: "Access denied. You can only delete your own consultations." });
     }
     
     // Delete PDF from GridFS if exists (this is also handled in the model's pre-middleware)
@@ -216,9 +244,15 @@ exports.getConsultationsByUser = async (req, res) => {
   try {
     const { userId } = req.params;
     
-    const consultations = await Consultation.find({ clientId: userId })
+    // NEW: Check if user is trying to access their own consultations
+    if (userId !== req.user.id) {
+      return res.status(403).json({ msg: "Access denied. You can only view your own consultations." });
+    }
+    
+    const consultations = await Consultation.find({ createdBy: userId }) // Changed from clientId to createdBy
       .populate("categories", "name")
       .populate("clientId", "name email")
+      .populate("createdBy", "name email") // NEW: Populate creator info
       .sort({ createdAt: -1 });
     
     // Add PDF info to each consultation
@@ -229,6 +263,73 @@ exports.getConsultationsByUser = async (req, res) => {
     }));
     
     res.json(consultationsWithPDFInfo);
+  } catch (error) {
+    res.status(500).json({ msg: error.message });
+  }
+};
+
+// NEW: Get current user's consultations (simplified endpoint)
+exports.getMyConsultations = async (req, res) => {
+  try {
+    const { 
+      page = 1, 
+      limit = 10,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      status,
+      search
+    } = req.query;
+    
+    let query = {
+      createdBy: req.user.id
+    };
+    
+    // Apply filters
+    if (status) {
+      query.status = status;
+    }
+    
+    if (search) {
+      query.$or = [
+        { name: new RegExp(search, 'i') },
+        { fatherName: new RegExp(search, 'i') },
+        { motherName: new RegExp(search, 'i') },
+        { phone: new RegExp(search, 'i') },
+        { email: new RegExp(search, 'i') },
+        { placeOfBirth: new RegExp(search, 'i') }
+      ];
+    }
+    
+    const skip = (page - 1) * limit;
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    
+    const consultations = await Consultation.find(query)
+      .populate("categories", "name")
+      .populate("clientId", "name email")
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    const totalConsultations = await Consultation.countDocuments(query);
+    const totalPages = Math.ceil(totalConsultations / limit);
+    
+    const consultationsWithPDFInfo = consultations.map(consultation => ({
+      ...consultation.toObject(),
+      hasPDF: consultation.hasPDF,
+      pdfInfo: consultation.getPDFInfo()
+    }));
+    
+    res.json({
+      data: consultationsWithPDFInfo,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalConsultations,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    });
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }

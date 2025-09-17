@@ -9,7 +9,7 @@ const clientRoutes = require("./routes/clientRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const subcategoryRoutes = require("./routes/subcategoryRoutes");
 const consultationRoutes = require("./routes/consultationRoutes");
-
+const consultationHistoryRoutes = require('./routes/consultationHistory');
 dotenv.config();
 connectDB();
 
@@ -30,6 +30,6 @@ app.use("/api/clients", clientRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/subcategories", subcategoryRoutes);
 app.use("/api/consultations", consultationRoutes);
-
+app.use('/api/consultation-history', consultationHistoryRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

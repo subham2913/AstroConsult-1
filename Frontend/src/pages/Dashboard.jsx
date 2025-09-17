@@ -30,34 +30,57 @@ export default function Dashboard() {
     };
   }, []);
 
+
+  const cardSliderSettings = {
+    dots: true,
+    infinite: false,
+    speed: 400,
+    slidesToShow: 3,
+    slidesToScroll: 1,
+    adaptiveHeight: true,
+    arrows: true,
+    responsive: [
+      {
+        breakpoint: 1024, // tablet and below
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 1,
+          infinite: false,
+          dots: true,
+        }
+      },
+      {
+        breakpoint: 640, // mobile
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+          dots: true,
+          arrows: false,
+        }
+      }
+    ]
+  };
   const regularCards = [
-    { 
-      name: "Clients", 
-      path: "/clients", 
-      icon: <FaUsers className="text-blue-600" />,
-      bgGradient: "from-blue-50 to-blue-100",
-      borderColor: "border-blue-200",
-      hoverBg: "hover:from-blue-100 hover:to-blue-200"
-    },
-    { 
-      name: "Consultations", 
-      path: "/consultations", 
+
+    {
+      name: "Consultations",
+      path: "/consultations",
       icon: <FaComments className="text-pink-600" />,
       bgGradient: "from-pink-50 to-pink-100",
       borderColor: "border-pink-200",
       hoverBg: "hover:from-pink-100 hover:to-pink-200"
     },
-    { 
-      name: "Categories", 
-      path: "/categories", 
+    {
+      name: "Categories",
+      path: "/categories",
       icon: <FaListAlt className="text-green-600" />,
       bgGradient: "from-green-50 to-green-100",
       borderColor: "border-green-200",
       hoverBg: "hover:from-green-100 hover:to-green-200"
     },
-    { 
-      name: "Sub-Categories", 
-      path: "/sub-categories", 
+    {
+      name: "Sub-Categories",
+      path: "/sub-categories",
       icon: <FaProjectDiagram className="text-purple-600" />,
       bgGradient: "from-purple-50 to-purple-100",
       borderColor: "border-purple-200",
@@ -66,9 +89,9 @@ export default function Dashboard() {
   ];
 
   const adminCards = [
-    { 
-      name: "User Management", 
-      path: "/admin/users", 
+    {
+      name: "User Management",
+      path: "/admin/users",
       icon: <FaUserShield className="text-red-600" />,
       bgGradient: "from-red-50 to-red-100",
       borderColor: "border-red-200",
@@ -113,11 +136,10 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-orange-25 to-yellow-25">
       {/* Approval Status Warning */}
       {showApprovalStatus && (
-        <div className={`${
-          user?.status === 'rejected' 
+        <div className={`${user?.status === 'rejected'
             ? 'bg-red-50 border-red-200 text-red-800'
             : 'bg-yellow-50 border-yellow-200 text-yellow-800'
-        } border-l-4 p-4 mb-4 mx-4 mt-4 rounded-r-lg`}>
+          } border-l-4 p-4 mb-4 mx-4 mt-4 rounded-r-lg`}>
           <div className="flex items-center">
             <FaExclamationTriangle className="h-5 w-5 mr-3" />
             <div>
@@ -125,7 +147,7 @@ export default function Dashboard() {
                 {user?.status === 'rejected' ? 'Account Rejected' : 'Account Pending Approval'}
               </h4>
               <p className="text-sm mt-1">
-                {user?.status === 'rejected' 
+                {user?.status === 'rejected'
                   ? 'Your account has been rejected. Please contact support for assistance.'
                   : 'Your account is pending admin approval. Some features may be limited until approved.'
                 }
@@ -171,7 +193,7 @@ export default function Dashboard() {
       <div className="flex relative lg:h-screen">
         {/* Left Sidebar - Mechanical Watch */}
         <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed left-0 top-0 h-full z-40 w-64 sm:w-72 lg:w-80 xl:w-72 bg-gradient-to-b from-orange-50 via-yellow-25 to-orange-75 flex flex-col items-center justify-center shadow-2xl transition-all duration-300 ease-in-out border-r border-orange-150`}>
-          
+
           {/* Mobile Close Button */}
           <button
             onClick={() => setSidebarOpen(false)}
@@ -196,7 +218,7 @@ export default function Dashboard() {
                     }}
                   />
                 ))}
-                
+
                 {/* Hour Numbers */}
                 {[12, 3, 6, 9].map((num, i) => (
                   <div
@@ -245,7 +267,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          
+
           {/* Digital Time Display */}
           <div className="text-center px-4">
             <div className="text-xl sm:text-2xl lg:text-3xl font-mono font-bold tracking-wider text-orange-800 bg-white bg-opacity-80 px-4 sm:px-6 py-2 sm:py-3 rounded-xl shadow-lg border border-orange-200">
@@ -276,7 +298,7 @@ export default function Dashboard() {
                 </span>
               )}
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <div className="text-sm font-medium text-orange-800">{user?.name}</div>
@@ -292,40 +314,48 @@ export default function Dashboard() {
           </nav>
 
           {/* Cards Section */}
-          <main className="flex-1 overflow-y-auto p-4 lg:p-6 xl:p-8 pb-20 lg:pb-8">
-            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 w-full max-w-xs sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl ${
-              user?.role === 'admin' ? 'lg:grid-cols-3 xl:grid-cols-3' : 'lg:grid-cols-2 xl:grid-cols-2'
-            }`}>
-              {cards.map((card) => (
-                <div
-                  key={card.name}
-                  onClick={() => navigate(card.path)}
-                  className={`w-full aspect-square flex flex-col items-center justify-center gap-3 lg:gap-4 bg-gradient-to-br ${card.bgGradient} ${card.hoverBg} rounded-2xl lg:rounded-3xl border-2 ${card.borderColor} cursor-pointer hover:scale-105 hover:shadow-xl transition-all duration-300 relative overflow-hidden group active:scale-95 touch-manipulation`}
-                  style={{ minHeight: '150px' }}
-                >
-                  {/* Background Pattern */}
-                  <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <div className="w-full h-full bg-gradient-to-br from-transparent via-white to-transparent"></div>
-                  </div>
-                  
-                  {/* Icon */}
-                  <div className="relative z-10 p-3 lg:p-4 rounded-full bg-white shadow-md group-hover:shadow-lg transition-shadow">
-                    {React.cloneElement(card.icon, { 
-                      size: isMobile ? 24 : window.innerWidth >= 1280 ? 36 : 32,
-                      className: card.icon.props.className 
-                    })}
-                  </div>
-                  
-                  {/* Text */}
-                  <span className="relative z-10 font-bold text-sm sm:text-base lg:text-lg text-gray-700 group-hover:text-gray-800 transition-colors px-2 text-center">
-                    {card.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </main>
+          <main className="flex-1 overflow-y-auto p-4 lg:p-6 xl:p-8">
+  <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
+    <div className="flex flex-wrap justify-center gap-6">
+      {cards.map((card) => (
+        <div
+          key={card.name}
+          onClick={() => navigate(card.path)}
+          className={`w-36 sm:w-40 lg:w-48 
+            aspect-square flex flex-col items-center justify-center 
+            gap-3 lg:gap-4 bg-gradient-to-br ${card.bgGradient} ${card.hoverBg} 
+            rounded-2xl lg:rounded-3xl border-2 ${card.borderColor} 
+            cursor-pointer hover:scale-105 hover:shadow-xl 
+            transition-all duration-300 relative overflow-hidden 
+            group active:scale-95 touch-manipulation`}
+          style={{ minHeight: "150px" }}
+        >
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity">
+            <div className="w-full h-full bg-gradient-to-br from-transparent via-white to-transparent"></div>
+          </div>
+
+          {/* Icon */}
+          <div className="relative z-10 p-3 lg:p-4 rounded-full bg-white shadow-md group-hover:shadow-lg transition-shadow">
+            {React.cloneElement(card.icon, {
+              size: isMobile ? 24 : window.innerWidth >= 1280 ? 36 : 32,
+              className: card.icon.props.className,
+            })}
+          </div>
+
+          {/* Text */}
+          <span className="relative z-10 font-bold text-sm sm:text-base lg:text-lg text-gray-700 group-hover:text-gray-800 transition-colors px-2 text-center">
+            {card.name}
+          </span>
         </div>
-        
+      ))}
+    </div>
+  </div>
+</main>
+
+
+        </div>
+
         {/* Right Sidebar - Calendar (Desktop Only) */}
         <div className="hidden xl:flex fixed right-0 top-0 h-full w-64 2xl:w-72 bg-gradient-to-b from-orange-50 via-yellow-25 to-orange-75 flex-col items-center justify-center shadow-2xl border-l border-orange-150 p-4 2xl:p-6">
           {/* Calendar */}
@@ -336,7 +366,7 @@ export default function Dashboard() {
                 {currentTime.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </h3>
             </div>
-            
+
             {/* Days of Week */}
             <div className="grid grid-cols-7 bg-orange-50">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
@@ -345,7 +375,7 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
-            
+
             {/* Calendar Grid */}
             <div className="grid grid-cols-7">
               {(() => {
@@ -354,36 +384,35 @@ export default function Dashboard() {
                 const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
                 const startingDayOfWeek = firstDay.getDay();
                 const daysInMonth = lastDay.getDate();
-                
+
                 const days = [];
-                
+
                 for (let i = 0; i < startingDayOfWeek; i++) {
                   days.push(
                     <div key={`empty-${i}`} className="h-10 2xl:h-12 border-r border-b border-orange-100"></div>
                   );
                 }
-                
+
                 for (let day = 1; day <= daysInMonth; day++) {
                   const isToday = day === today.getDate();
                   days.push(
                     <div
                       key={day}
-                      className={`h-10 2xl:h-12 flex items-center justify-center font-medium border-r border-b border-orange-100 last:border-r-0 transition-colors text-sm ${
-                        isToday 
-                          ? 'bg-orange-500 text-white font-bold shadow-md' 
+                      className={`h-10 2xl:h-12 flex items-center justify-center font-medium border-r border-b border-orange-100 last:border-r-0 transition-colors text-sm ${isToday
+                          ? 'bg-orange-500 text-white font-bold shadow-md'
                           : 'hover:bg-orange-50 text-gray-700'
-                      }`}
+                        }`}
                     >
                       {day}
                     </div>
                   );
                 }
-                
+
                 return days;
               })()}
             </div>
           </div>
-          
+
           <div className="w-full space-y-4">
             {/* Current Date Display */}
             <div className="bg-white bg-opacity-90 rounded-xl p-3 2xl:p-4 shadow-lg border border-orange-200">
@@ -414,7 +443,7 @@ export default function Dashboard() {
                 {currentTime.getDate()}
               </div>
             </div>
-            
+
             <div className="flex-1 ml-3 sm:ml-4 space-y-1">
               <div className="text-xs sm:text-sm text-orange-600 font-medium">{formatDate(currentTime)}</div>
               <div className="text-xs sm:text-sm font-bold text-orange-900">Tithi: {getTithi()}</div>

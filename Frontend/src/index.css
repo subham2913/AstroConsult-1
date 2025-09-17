@@ -1,3 +1,13 @@
 @import "tailwindcss";
 /* In your main CSS file (e.g., index.css or App.css) */
 @import "prosemirror-view/style/prosemirror.css";
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@import "slick-carousel/slick/slick.css"; 
+@import "slick-carousel/slick/slick-theme.css";
