@@ -38,7 +38,12 @@ exports.registerUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ msg: "Please provide email and password" });
+    }
+
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
@@ -51,40 +56,45 @@ exports.loginUser = async (req, res) => {
       return res.status(400).json({ msg: "Invalid credentials" });
     }
 
-    // Check if user is approved (except for admins)
+    // Check approval (skip for admins)
     if (user.role !== "admin" && (!user.isApproved || user.status !== "approved")) {
       let message = "Your account is pending approval.";
       if (user.status === "rejected") {
-        message = `Your account has been rejected. ${user.rejectionReason ? `Reason: ${user.rejectionReason}` : ''}`;
+        message = `Your account has been rejected. ${
+          user.rejectionReason ? `Reason: ${user.rejectionReason} `: ""
+        }`;
       }
-      return res.status(403).json({ 
+      return res.status(403).json({
         msg: message,
-        status: user.status 
+        status: user.status,
       });
     }
 
-    // Generate token
-    const token = jwt.sign({ 
-      id: user._id, 
-      role: user.role 
-    }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET || "defaultsecret", // fallback if .env is missing
+      { expiresIn: "1d" }
+    );
 
-    res.json({ 
-      token, 
-      user: { 
-        id: user._id, 
-        name: user.name, 
-        email: user.email, 
+    // Send response
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
         role: user.role,
         isApproved: user.isApproved,
-        status: user.status
-      } 
+        status: user.status,
+      },
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({ msg: error.message });
+    res.status(500).json({ msg: "Server error" });
   }
 };
 
