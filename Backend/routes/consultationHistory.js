@@ -7,7 +7,7 @@ const {
   deleteConsultationHistory,
   getMyConsultationHistory // NEW: Import the new controller method
 } = require("../controllers/consultationHistoryController");
-const {authMiddleware} = require("../middleware/authMiddleware");
+const {authMiddleware} = require("../middleware/authmiddleware");
 
 const router = express.Router();
 

@@ -11,7 +11,7 @@ const {
   getConsultationsByUser,
   getMyConsultations // NEW: Import the new controller method
 } = require("../controllers/consultationController");
-const {authMiddleware} = require("../middleware/authMiddleware");
+const {authMiddleware} = require("../middleware/authmiddleware");
 
 const router = express.Router();
 
