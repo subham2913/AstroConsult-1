@@ -1,7 +1,8 @@
 const express = require("express");
 const { addClient, getClients, getClientById, updateClient, deleteClient } = require("../controllers/clientController");
+const { authMiddleware } = require("../middleware/authmiddleware");
 
-const {authMiddleware} = require("../middleware/authMiddleware");
+
 
 const router = express.Router();
 
