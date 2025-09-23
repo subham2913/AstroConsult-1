@@ -625,7 +625,7 @@ const ConsultationManagement = () => {
   const [filterName, setFilterName] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
   const getAuthToken = () => localStorage.getItem('token');
 
   // Fetch consultations from backend
@@ -904,7 +904,7 @@ const CreateConsultationModal = ({ categories, onClose, onSuccess, setError, set
   const [kundaliFile, setKundaliFile] = useState(null);
   const [loading, setLocalLoading] = useState(false);
 
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
   const getAuthToken = () => localStorage.getItem('token');
 
   const handleInputChange = (e) => {
@@ -1026,7 +1026,7 @@ const ConsultationDetailModal = ({ consultation, onClose, onEdit, onDelete, setE
   const [historyLoading, setHistoryLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('details'); // 'details' or 'history'
 
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
   const getAuthToken = () => localStorage.getItem('token');
 
   const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-IN');
@@ -1499,7 +1499,7 @@ const EditConsultationModal = ({ consultation, categories, onClose, onSuccess, s
   const [kundaliFile, setKundaliFile] = useState(null);
   const [loading, setLocalLoading] = useState(false);
 
-  const API_BASE = 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
   const getAuthToken = () => localStorage.getItem('token');
 
   const handleInputChange = (e) => {

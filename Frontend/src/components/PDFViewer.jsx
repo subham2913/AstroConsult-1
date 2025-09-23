@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 const PDFViewer = ({ consultation }) => {
   const [loading, setLoading] = useState(false);
   
   const getAuthToken = () => localStorage.getItem('token');
 
-  // Function to view PDF in new tab using fetch (matching your existing patterns)
+  // Function to view PDF in new tab
   const viewPDF = async () => {
     try {
       setLoading(true);
       const token = getAuthToken();
       
       const response = await fetch(
-        `http://localhost:5000/api/consultations/${consultation._id}/pdf/view`,
+        `${API_BASE}/consultations/${consultation._id}/pdf/view`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -24,12 +26,9 @@ const PDFViewer = ({ consultation }) => {
         throw new Error('Failed to load PDF');
       }
 
-      // Create blob URL and open in new tab
       const pdfBlob = await response.blob();
       const pdfUrl = URL.createObjectURL(pdfBlob);
       window.open(pdfUrl, '_blank');
-
-      // Clean up the URL after a delay
       setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
     } catch (error) {
       console.error('Error viewing PDF:', error);
@@ -46,7 +45,7 @@ const PDFViewer = ({ consultation }) => {
       const token = getAuthToken();
       
       const response = await fetch(
-        `http://localhost:5000/api/consultations/${consultation._id}/pdf`,
+        `${API_BASE}/consultations/${consultation._id}/pdf`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -58,7 +57,6 @@ const PDFViewer = ({ consultation }) => {
         throw new Error('Failed to download PDF');
       }
 
-      // Create download link
       const pdfBlob = await response.blob();
       const downloadUrl = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
@@ -76,7 +74,6 @@ const PDFViewer = ({ consultation }) => {
     }
   };
 
-  // Check if PDF exists (using your existing hasPDF virtual or kundaliFileId)
   const hasPDF = consultation.hasPDF || consultation.kundaliFileId || consultation.kundaliPdfName;
 
   if (!hasPDF) {

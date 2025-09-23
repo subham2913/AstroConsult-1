@@ -20,7 +20,7 @@ export default function EditConsultationHistoryPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const API_BASE = "http://localhost:5000/api";
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
   const getAuthToken = () => localStorage.getItem("token");
 
   useEffect(() => {

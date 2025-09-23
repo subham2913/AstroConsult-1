@@ -3,21 +3,30 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 
+// Env variable with fallback
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 export default function ClientDetails() {
   const { id } = useParams(); // clientId from URL
   const [client, setClient] = useState(null);
   const [consultations, setConsultations] = useState([]);
 
   useEffect(() => {
+    const token = localStorage.getItem("token"); // optional auth
+
     // fetch client details
-    axios.get(`http://localhost:5000/api/clients/${id}`)
+    axios.get(`${API_BASE}/clients/${id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
       .then(res => setClient(res.data))
-      .catch(err => console.error(err));
+      .catch(err => console.error("Error fetching client:", err));
 
     // fetch consultations of this client
-    axios.get(`http://localhost:5000/api/consultations/client/${id}`)
+    axios.get(`${API_BASE}/consultations/client/${id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
       .then(res => setConsultations(res.data))
-      .catch(err => console.error(err));
+      .catch(err => console.error("Error fetching consultations:", err));
   }, [id]);
 
   if (!client) return <p className="p-6">Loading client...</p>;

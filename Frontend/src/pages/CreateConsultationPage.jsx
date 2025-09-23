@@ -32,7 +32,7 @@ const CreateConsultationPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
   const getAuthToken = () => localStorage.getItem('token');
 
   // Fetch categories on component mount
